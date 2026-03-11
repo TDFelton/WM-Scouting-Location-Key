@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Location Label Reference</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8fafc;
+      min-height: 100vh;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .title-bar {
+      background: #001E62;
+      color: #fff;
+      padding: 10px 28px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: 1px;
+      margin-bottom: 20px;
+    }
+
+    .layout {
+      display: flex;
+      gap: 32px;
+      align-items: flex-start;
+    }
+
+    /* ── Zone diagram ── */
+    .diagram { display: flex; flex-direction: column; align-items: center; }
+
+    .perspective-labels {
+      display: flex;
+      justify-content: space-between;
+      width: 294px; /* 3*90 + 2*12 */
+      margin-bottom: 4px;
+    }
+    .perspective-labels span { font-size: 10px; color: #64748b; }
+    .perspective-labels .center-lbl { font-style: italic; }
+    .perspective-labels .bold-lbl { font-weight: 600; }
+
+    .chase-row {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 6px;
+    }
+    .chase-row.bottom { margin-top: 6px; margin-bottom: 0; }
+
+    .spacer { width: 90px; height: 1px; }
+
+    .strike-zone {
+      border: 3px solid #001E62;
+      border-radius: 4px;
+      padding: 6px;
+      background: #eff6ff;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .zone-row { display: flex; gap: 6px; }
+
+    .cell {
+      width: 90px;
+      height: 72px;
+      border-radius: 6px;
+      border: 2px solid #93c5fd;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .cell.small { height: 52px; }
+    .cell:hover { filter: brightness(0.95); }
+    .cell.selected {
+      background: #001E62 !important;
+      border-color: #60a5fa;
+      box-shadow: 0 0 0 3px #93c5fd;
+    }
+
+    .cell-label {
+      font-weight: 700;
+      font-size: 13px;
+      color: #1e3a8a;
+      text-align: center;
+      line-height: 1.2;
+    }
+    .cell.small .cell-label { font-size: 11px; }
+    .cell.selected .cell-label { color: #fff; }
+
+    .cell-desc {
+      font-size: 9px;
+      color: #475569;
+      text-align: center;
+      margin-top: 2px;
+      line-height: 1.2;
+    }
+    .cell.selected .cell-desc { color: #bfdbfe; }
+
+    /* MDL special buttons */
+    .mdl-row {
+      margin-top: 16px;
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+    .mdl-btn {
+      background: #e0f2fe;
+      border: 2px solid #7dd3fc;
+      border-radius: 6px;
+      padding: 6px 14px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .mdl-btn:hover { filter: brightness(0.95); }
+    .mdl-btn.selected {
+      background: #001E62;
+      border-color: #60a5fa;
+    }
+    .mdl-btn-label {
+      font-weight: 700;
+      font-size: 12px;
+      color: #001E62;
+    }
+    .mdl-btn.selected .mdl-btn-label { color: #fff; }
+    .mdl-btn-desc {
+      font-size: 9px;
+      color: #0369a1;
+    }
+    .mdl-btn.selected .mdl-btn-desc { color: #bfdbfe; }
+
+    /* Legend swatches */
+    .legend {
+      margin-top: 16px;
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .legend-item { display: flex; align-items: center; gap: 5px; }
+    .swatch {
+      width: 14px; height: 14px;
+      border: 1.5px solid #93c5fd;
+      border-radius: 3px;
+    }
+    .legend-item span { font-size: 10px; color: #475569; }
+
+    /* ── Info panel ── */
+    .info-panel {
+      width: 280px;
+      background: #fff;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 20px;
+      min-height: 200px;
+      transition: border-color 0.2s;
+    }
+    .info-panel.active { border-color: #001E62; }
+
+    .info-empty {
+      color: #94a3b8;
+      font-size: 13px;
+      text-align: center;
+      margin-top: 40px;
+    }
+    .info-empty .hand { font-size: 28px; margin-bottom: 8px; }
+
+    .info-label-badge {
+      background: #001E62;
+      color: #fff;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-weight: 700;
+      font-size: 16px;
+      margin-bottom: 12px;
+      display: inline-block;
+    }
+    .info-desc {
+      font-weight: 600;
+      font-size: 13px;
+      color: #1e3a8a;
+      margin-bottom: 8px;
+    }
+    .info-detail {
+      font-size: 12px;
+      color: #374151;
+      line-height: 1.6;
+    }
+    .chips {
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .chip {
+      border-radius: 99px;
+      padding: 2px 10px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .chip-yellow { background: #fef9c3; border: 1px solid #fbbf24; color: #92400e; }
+    .chip-blue   { background: #dbeafe; border: 1px solid #60a5fa; color: #1e3a8a; }
+    .chip-purple { background: #ede9fe; border: 1px solid #a78bfa; color: #4c1d95; }
+
+    .footer-note {
+      margin-top: 16px;
+      font-size: 10px;
+      color: #94a3b8;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<div class="title-bar">LOCATION LABEL REFERENCE</div>
+
+<div class="layout">
+
+  <!-- Zone diagram -->
+  <div class="diagram">
+
+    <div class="perspective-labels">
+      <span class="bold-lbl">ARM SIDE</span>
+      <span class="center-lbl">catcher's view</span>
+      <span class="bold-lbl">GLOVE SIDE</span>
+    </div>
+
+    <!-- UPchase -->
+    <div class="chase-row">
+      <div class="spacer"></div>
+      <div class="cell small" id="cell-UPchase" style="background:#fde68a;" onclick="toggle('UPchase')">
+        <span class="cell-label">UPchase</span>
+        <span class="cell-desc">Above zone</span>
+      </div>
+      <div class="spacer"></div>
+    </div>
+
+    <!-- ASchase | Strike zone | GSchase — all inline -->
+    <div style="display:flex; gap:6px; align-items:stretch;">
+
+      <div class="cell" id="cell-ASchase" style="background:#fde68a; width:72px;" onclick="toggle('ASchase')">
+        <span class="cell-label">ASchase</span>
+        <span class="cell-desc">Arm side outside</span>
+      </div>
+
+      <div class="strike-zone">
+        <!-- Upper third -->
+        <div class="zone-row">
+          <div class="cell" id="cell-AS+UP"  style="background:#dbeafe;" onclick="toggle('AS+UP')">  <span class="cell-label">AS+UP</span>  </div>
+          <div class="cell" id="cell-TZN"    style="background:#dbeafe;" onclick="toggle('TZN')">    <span class="cell-label">TZN</span>    </div>
+          <div class="cell" id="cell-GS+UP"  style="background:#dbeafe;" onclick="toggle('GS+UP')">  <span class="cell-label">GS+UP</span>  </div>
+        </div>
+        <!-- Middle third -->
+        <div class="zone-row">
+          <div class="cell" id="cell-AS"     style="background:#dbeafe;" onclick="toggle('AS')">     <span class="cell-label">AS</span>     </div>
+          <div class="cell" id="cell-MDLMDL" style="background:#bfdbfe;" onclick="toggle('MDLMDL')"> <span class="cell-label">MDLMDL</span> </div>
+          <div class="cell" id="cell-GS"     style="background:#dbeafe;" onclick="toggle('GS')">     <span class="cell-label">GS</span>     </div>
+        </div>
+        <!-- Lower third -->
+        <div class="zone-row">
+          <div class="cell" id="cell-AS+DWN" style="background:#dbeafe;" onclick="toggle('AS+DWN')"> <span class="cell-label">AS+DWN</span> </div>
+          <div class="cell" id="cell-BZN"    style="background:#dbeafe;" onclick="toggle('BZN')">    <span class="cell-label">BZN</span>    </div>
+          <div class="cell" id="cell-GS+DWN" style="background:#dbeafe;" onclick="toggle('GS+DWN')"> <span class="cell-label">GS+DWN</span> </div>
+        </div>
+      </div>
+
+      <div class="cell" id="cell-GSchase" style="background:#fde68a; width:72px;" onclick="toggle('GSchase')">
+        <span class="cell-label">GSchase</span>
+        <span class="cell-desc">Glove side outside</span>
+      </div>
+
+    </div>
+
+    <!-- DWNchase -->
+    <div class="chase-row bottom" style="margin-top:6px;">
+      <div class="spacer"></div>
+      <div class="cell small" id="cell-DWNchase" style="background:#fde68a;" onclick="toggle('DWNchase')">
+        <span class="cell-label">DWNchase</span>
+        <span class="cell-desc">Below zone</span>
+      </div>
+      <div class="spacer"></div>
+    </div>
+
+    <!-- MDL special buttons -->
+    <div class="mdl-row">
+      <div class="mdl-btn" id="cell-MDL(U/D)" onclick="toggle('MDL(U/D)')">
+        <span class="mdl-btn-label">MDL(U/D)</span>
+        <span class="mdl-btn-desc">Center col, up/down spread</span>
+      </div>
+      <div class="mdl-btn" id="cell-MDL(L/R)" onclick="toggle('MDL(L/R)')">
+        <span class="mdl-btn-label">MDL(L/R)</span>
+        <span class="mdl-btn-desc">Middle row, left/right spread</span>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+      <div class="legend-item"><div class="swatch" style="background:#fde68a;"></div><span>Chase zone (≥25%)</span></div>
+      <div class="legend-item"><div class="swatch" style="background:#dbeafe;"></div><span>In-zone (≥12–15%)</span></div>
+      <div class="legend-item"><div class="swatch" style="background:#bfdbfe;"></div><span>Center / MDL variants</span></div>
+    </div>
+  </div>
+
+  <!-- Info panel -->
+  <div class="info-panel" id="info-panel">
+    <div class="info-empty">
+      <div class="hand">👆</div>
+      Click any zone to see its definition and thresholds
+    </div>
+  </div>
+
+</div>
+
+<div class="footer-note">
+  All zones from catcher's perspective. RHP arm side = 3B side (left). Glove side = 1B side (right).
+</div>
+
+<script>
+  const zones = {
+    "UPchase":   { label:"UPchase",   desc:"Up & Out of Zone",              type:"chase",       detail:"Ball is above the strike zone, within the horizontal bounds. ≥25% of pitches must land here to trigger this label." },
+    "GSchase":   { label:"GSchase",   desc:"Glove-Side Chase",              type:"chase",       detail:"Ball is outside the strike zone on the glove side (or glove side + above). ≥25% threshold. For RHP: catcher's left / 1B side." },
+    "ASchase":   { label:"ASchase",   desc:"Arm-Side Chase",                type:"chase",       detail:"Ball is outside the strike zone on the arm side (or arm side + above). Mirror of GSchase. ≥25% threshold. For RHP: pitcher's right / 3B side." },
+    "DWNchase":  { label:"DWNchase",  desc:"Down & Out of Zone",            type:"chase",       detail:"Ball is below the strike zone, within the horizontal bounds. ≥25% of pitches must land here to trigger." },
+    "AS+UP":     { label:"AS+UP",     desc:"Arm Side, Upper Third",         type:"zone-skew",   detail:"Upper third of zone, skewed arm side. Triggers when ≥15% of total pitches land in the upper third AND >60% of those are on the arm side." },
+    "TZN":       { label:"TZN",       desc:"Top of Zone (even spread)",     type:"zone-upper",  detail:"Upper third of zone, spread evenly across all three horizontal columns. Triggers when ≥15% of pitches are in the upper third but neither side exceeds 60%." },
+    "GS+UP":     { label:"GS+UP",     desc:"Glove Side, Upper Third",       type:"zone-skew",   detail:"Upper third of zone, skewed glove side. Triggers when ≥15% land in the upper third AND >60% of those are on the glove side." },
+    "AS":        { label:"AS",        desc:"Arm Side",                      type:"zone-mid",    detail:"Middle vertical third of zone, arm-side column. ≥12% threshold. For RHP: pitcher's right / 3B side." },
+    "MDLMDL":    { label:"MDLMDL",    desc:"True Center",                   type:"center-only", detail:"The innermost ninth of the zone — center column, middle vertical third (MID_mid only). ≥12% threshold." },
+    "GS":        { label:"GS",        desc:"Glove Side",                    type:"zone-mid",    detail:"Middle vertical third of zone, glove-side column. ≥12% threshold. For RHP: catcher's left / 1B side." },
+    "AS+DWN":    { label:"AS+DWN",    desc:"Arm Side, Lower Third",         type:"zone-skew",   detail:"Lower third of zone, skewed arm side. Triggers when ≥15% land in the lower third AND >60% of those are on the arm side." },
+    "BZN":       { label:"BZN",       desc:"Bottom of Zone (even spread)",  type:"zone-lower",  detail:"Lower third of zone, spread evenly. Triggers when ≥15% are in lower third but neither side exceeds 60%." },
+    "GS+DWN":    { label:"GS+DWN",    desc:"Glove Side, Lower Third",       type:"zone-skew",   detail:"Lower third of zone, skewed glove side. Triggers when ≥15% land in lower third AND >60% of those are on the glove side." },
+    "MDL(U/D)":  { label:"MDL(U/D)", desc:"Center Column, Up/Down Spread", type:"center",      detail:"Center column, pitches spread across upper and lower portions (UP_mid + DWN_mid). ≥12% threshold. If >60% skewed up → collapses to TZN. If >60% skewed down → collapses to BZN." },
+    "MDL(L/R)":  { label:"MDL(L/R)", desc:"Middle Row, Left/Right Spread", type:"center",      detail:"Middle vertical third, arm and glove cells combined (MID_arm + MID_glv). ≥12% threshold. If >60% arm side → collapses to AS. If >60% glove → collapses to GS." },
+  };
+
+  let selected = null;
+
+  function toggle(id) {
+    // Deselect previous
+    if (selected) {
+      const prev = document.getElementById('cell-' + selected);
+      if (prev) prev.classList.remove('selected');
+    }
+    selected = (selected === id) ? null : id;
+    if (selected) {
+      const el = document.getElementById('cell-' + selected);
+      if (el) el.classList.add('selected');
+    }
+    renderInfo();
+  }
+
+  function renderInfo() {
+    const panel = document.getElementById('info-panel');
+    if (!selected) {
+      panel.classList.remove('active');
+      panel.innerHTML = `
+        <div class="info-empty">
+          <div class="hand">👆</div>
+          Click any zone to see its definition and thresholds
+        </div>`;
+      return;
+    }
+    const z = zones[selected];
+    panel.classList.add('active');
+
+    const isUpper = ["TZN","AS+UP","GS+UP"].includes(selected);
+    const isLower = ["BZN","AS+DWN","GS+DWN"].includes(selected);
+    const thresholdPct = (isUpper || isLower) ? "≥15%" : "≥12%";
+
+    let chips = "";
+    if (z.type === "chase") {
+      chips += `<span class="chip chip-yellow">Threshold: ≥25%</span>`;
+    } else {
+      chips += `<span class="chip chip-blue">Threshold: ${thresholdPct}</span>`;
+    }
+    if (z.type === "zone-skew" || z.type === "center") {
+      chips += `<span class="chip chip-purple">Skew check: 60%</span>`;
+    }
+
+    panel.innerHTML = `
+      <div class="info-label-badge">${z.label}</div>
+      <div class="info-desc">${z.desc}</div>
+      <div class="info-detail">${z.detail}</div>
+      <div class="chips">${chips}</div>`;
+  }
+</script>
+
+</body>
+</html>
